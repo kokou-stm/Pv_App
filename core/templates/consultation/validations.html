@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Consultation Validations - PV en Ligne{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <h2>✅ Consultation Globale des Validations</h2>
+        <p class="user-role">Toutes les validations du système (Admin/Validator)</p>
+    </div>
+
+    <!-- Statistics Dashboard -->
+    <div class="stats-dashboard">
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <h3>{{ stats.total }}</h3>
+                <p>Total Validations</p>
+            </div>
+        </div>
+        <div class="stat-card stat-success">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+                <h3>{{ stats.validated }}</h3>
+                <p>Validées</p>
+            </div>
+        </div>
+        <div class="stat-card stat-danger">
+            <div class="stat-icon">❌</div>
+            <div class="stat-content">
+                <h3>{{ stats.rejected }}</h3>
+                <p>Refusées</p>
+            </div>
+        </div>
+        <div class="stat-card stat-info">
+            <div class="stat-icon">📈</div>
+            <div class="stat-content">
+                <h3>{{ stats.approval_rate|floatformat:1 }}%</h3>
+                <p>Taux d'Approbation</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="filter-card">
+        <h3>🔍 Filtres</h3>
+        <form method="get" class="filter-form">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="date_from">Date début</label>
+                    <input type="date" name="date_from" id="date_from" value="{{ filters.date_from }}">
+                </div>
+
+                <div class="filter-group">
+                    <label for="date_to">Date fin</label>
+                    <input type="date" name="date_to" id="date_to" value="{{ filters.date_to }}">
+                </div>
+
+                <div class="filter-group">
+                    <label for="validator">Validateur</label>
+                    <select name="validator" id="validator">
+                        <option value="">Tous</option>
+                        {% for v in validators %}
+                        <option value="{{ v.id }}" {% if filters.validator == v.id|stringformat:"s" %}selected{% endif %}>
+                            {{ v.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="author">Auteur Action</label>
+                    <select name="author" id="author">
+                        <option value="">Tous</option>
+                        {% for a in authors %}
+                        <option value="{{ a.id }}" {% if filters.author == a.id|stringformat:"s" %}selected{% endif %}>
+                            {{ a.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="status">Statut</label>
+                    <select name="status" id="status">
+                        <option value="">Tous</option>
+                        <option value="validé" {% if filters.status == "validé" %}selected{% endif %}>Validé</option>
+                        <option value="refusé" {% if filters.status == "refusé" %}selected{% endif %}>Refusé</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary">Appliquer les filtres</button>
+                <a href="{% url 'global_validations' %}" class="btn btn-secondary">Réinitialiser</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results -->
+    {% if page_obj %}
+    <div class="consultation-table-container">
+        <table class="consultation-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Action</th>
+                    <th>Auteur</th>
+                    <th>Validateur</th>
+                    <th>Statut</th>
+                    <th>Date</th>
+                    <th>Commentaire</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for validation in page_obj %}
+                <tr>
+                    <td>#{{ validation.id }}</td>
+                    <td>
+                        <a href="{% url 'validation_history' validation.action.id %}">
+                            Action #{{ validation.action.id }}
+                        </a>
+                    </td>
+                    <td>{{ validation.action.auteur.username }}</td>
+                    <td>
+                        {{ validation.validateur.username }}
+                        {% if validation.is_self_validation %}
+                        <span class="badge badge-warning">⚠️ Auto</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if validation.statut ==  'validé' %}
+                        <span class="badge badge-success">Validé</span>
+                        {% elif validation.statut ==  'refusé' %}
+                        <span class="badge badge-danger">Refusé</span>
+                        {% else %}
+                        <span class="badge badge-warning">En attente</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ validation.date_validation|date:"d/m/Y H:i" }}</td>
+                    <td class="description-cell">
+                        {% if validation.commentaire %}
+                        {% if validation.commentaire|length > 50 %}
+                        {{ validation.commentaire|slice:":50" }}...
+                        {% else %}
+                        {{ validation.commentaire }}
+                        {% endif %}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page=1{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+            class="page-link">« Première</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+            class="page-link">‹ Précédente</a>
+        {% endif %}
+
+        <span class="page-current">
+            Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+            class="page-link">Suivante ›</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+            class="page-link">Dernière »</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>Aucune validation trouvée</h3>
+        <p>Aucune validation ne correspond aux filtres sélectionnés.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

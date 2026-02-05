@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Actions en Attente - PV en Ligne{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <h2>📋 Actions en Attente de Validation</h2>
+        <p class="user-role">Total : <span class="badge badge-warning">{{ total_count }}</span></p>
+    </div>
+
+    {% if pending_actions %}
+    <div class="validation-list">
+        {% for action in pending_actions %}
+        <div class="validation-card">
+            <div class="validation-card-header">
+                <div>
+                    <strong>Action #{{ action.id }}</strong>
+                    <span class="text-muted">par {{ action.auteur.username }}</span>
+                </div>
+                <span class="badge badge-warning">En attente</span>
+            </div>
+
+            <div class="validation-card-body">
+                <p><strong>Service :</strong> {{ action.service }}</p>
+                <p><strong>Description :</strong></p>
+                <p class="action-description">{{ action.description }}</p>
+                <p class="text-muted"><small>Créée le {{ action.date_creation|date:"d/m/Y à H:i" }}</small></p>
+            </div>
+
+            <div class="validation-card-actions">
+                <a href="{% url 'validate_action' action.id %}" class="btn btn-success btn-sm">
+                    ✓ Valider
+                </a>
+                <a href="{% url 'reject_action' action.id %}" class="btn btn-danger btn-sm">
+                    ✗ Refuser
+                </a>
+                <a href="{% url 'comment_action' action.id %}" class="btn btn-secondary btn-sm">
+                    💬 Commenter
+                </a>
+                <a href="{% url 'validation_history' action.id %}" class="btn btn-secondary btn-sm">
+                    📜 Historique
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">✅</div>
+        <h3>Aucune action en attente</h3>
+        <p>Toutes les actions ont été validées ou refusées.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}Profil {{ profile_user.username }} - PV en Ligne{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <h2>👤 Profil de {{ profile_user.username }}</h2>
+        <p class="user-role">
+            {% if profile_user.role ==  'admin' %}
+            Administrateur
+            {% elif profile_user.role ==  'validator' %}
+            Validateur
+            {% else %}
+            Employé
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- User Information Card -->
+    <div class="profile-card">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                {{ profile_user.username|slice:":1"|upper }}
+            </div>
+            <div class="profile-info">
+                <h3>{{ profile_user.username }}</h3>
+                <p>{{ profile_user.email }}</p>
+                <p class="profile-meta">
+                    Membre depuis {{ profile_user.date_joined|date:"d/m/Y" }}
+                    {% if profile_user.is_validated %}
+                    • <span class="badge badge-success">Validé</span>
+                    {% else %}
+                    • <span class="badge badge-warning">Non validé</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Dashboard -->
+    <div class="stats-dashboard">
+        <div class="stat-card">
+            <div class="stat-icon">🕐</div>
+            <div class="stat-content">
+                <h3>{{ stats.total_services }}</h3>
+                <p>Services Total</p>
+            </div>
+        </div>
+        <div class="stat-card stat-info">
+            <div class="stat-icon">⏱️</div>
+            <div class="stat-content">
+                <h3>{{ stats.total_service_hours|floatformat:1 }}h</h3>
+                <p>Temps Total</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-content">
+                <h3>{{ stats.total_actions }}</h3>
+                <p>Actions Créées</p>
+            </div>
+        </div>
+        <div class="stat-card stat-success">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+                <h3>{{ stats.validated_actions }}</h3>
+                <p>Validées</p>
+            </div>
+        </div>
+        <div class="stat-card stat-danger">
+            <div class="stat-icon">❌</div>
+            <div class="stat-content">
+                <h3>{{ stats.rejected_actions }}</h3>
+                <p>Refusées</p>
+            </div>
+        </div>
+        <div class="stat-card stat-warning">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-content">
+                <h3>{{ stats.pending_actions }}</h3>
+                <p>En Attente</p>
+            </div>
+        </div>
+        <div class="stat-card stat-info">
+            <div class="stat-icon">📈</div>
+            <div class="stat-content">
+                <h3>{{ stats.validation_rate|floatformat:1 }}%</h3>
+                <p>Taux Validation</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">⌀</div>
+            <div class="stat-content">
+                <h3>{{ stats.avg_service_hours|floatformat:1 }}h</h3>
+                <p>Durée Moy. Service</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service History -->
+    <div class="profile-section">
+        <h3>🕐 Historique des Services</h3>
+        {% if services %}
+        <div class="service-timeline">
+            {% for service in services %}
+            <div class="timeline-item">
+                <div
+                    class="timeline-marker {% if service.statut ==  'ouvert' %}marker-success{% else %}marker-secondary{% endif %}">
+                </div>
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <strong>
+                            {% if service.statut ==  'ouvert' %}
+                            🟢 Service Ouvert
+                            {% else %}
+                            🔴 Service Fermé
+                            {% endif %}
+                        </strong>
+                        <span class="text-muted">{{ service.date_ouverture|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <p>
+                        <strong>Durée:</strong>
+                        {% if service.statut ==  'fermé' and service.date_fermeture %}
+                        {{ service.date_fermeture|timesince:service.date_ouverture }}
+                        {% else %}
+                        {{ service.get_remaining_time_display }}
+                        {% endif %}
+                    </p>
+                    {% if service.date_fermeture %}
+                    <p class="text-muted"><small>Fermé le {{ service.date_fermeture|date:"d/m/Y H:i" }}</small></p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state-small">
+            <p>Aucun service enregistré</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Action History -->
+    <div class="profile-section">
+        <h3>📋 Historique des Actions</h3>
+
+        <!-- Action Filters -->
+        <div class="filter-card-small">
+            <form method="get" class="filter-form-inline">
+                <div class="filter-group-inline">
+                    <label for="action_status">Statut</label>
+                    <select name="action_status" id="action_status">
+                        <option value="">Tous</option>
+                        <option value="en_attente" {% if filters.action_status == "en_attente" %}selected{% endif %}>En
+                            attente</option>
+                        <option value="validé" {% if filters.action_status == "validé" %}selected{% endif %}>Validé
+                        </option>
+                        <option value="refusé" {% if filters.action_status == "refusé" %}selected{% endif %}>Refusé
+                        </option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary">Filtrer</button>
+                <a href="{% url 'user_profile' profile_user.username %}"
+                    class="btn btn-sm btn-secondary">Réinitialiser</a>
+            </form>
+        </div>
+
+        {% if actions %}
+        <div class="action-list">
+            {% for action in actions %}
+            <div class="action-item">
+                <div class="action-header">
+                    <strong>Action #{{ action.id }}</strong>
+                    <span class="text-muted">{{ action.date_creation|date:"d/m/Y H:i" }}</span>
+                </div>
+                <p class="action-description">{{ action.description|truncatewords:20 }}</p>
+                <div class="action-footer">
+                    <span>
+                        {% if action.validation_status ==  'en_attente' %}
+                        <span class="badge badge-warning">En attente</span>
+                        {% elif action.validation_status ==  'validé' %}
+                        <span class="badge badge-success">Validé</span>
+                        {% elif action.validation_status ==  'refusé' %}
+                        <span class="badge badge-danger">Refusé</span>
+                        {% endif %}
+                    </span>
+                    <a href="{% url 'validation_history' action.id %}" class="btn btn-sm btn-secondary">Voir
+                        historique</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state-small">
+            <p>Aucune action trouvée</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="form-actions">
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">← Retour au tableau de bord</a>
+        {% if request.user.role ==  'admin' %}
+        <a href="{% url 'global_actions' %}" class="btn btn-primary">Voir toutes les actions</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

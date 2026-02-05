@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Refuser Action - PV en Ligne{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <h2>✗ Refuser l'Action #{{ action.id }}</h2>
+    </div>
+
+    <div class="form-card">
+        <div class="action-details">
+            <h3>Détails de l'Action</h3>
+            <p><strong>Auteur :</strong> {{ action.auteur.username }}</p>
+            <p><strong>Service :</strong> {{ action.service }}</p>
+            <p><strong>Date de création :</strong> {{ action.date_creation|date:"d/m/Y à H:i" }}</p>
+            <p><strong>Description :</strong></p>
+            <p class="action-description">{{ action.description }}</p>
+        </div>
+
+        <form method="post" class="validation-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="commentaire">Raison du refus *</label>
+                <textarea name="commentaire" id="commentaire" rows="5" required
+                    placeholder="Expliquez pourquoi cette action est refusée..."></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-danger">✗ Confirmer le Refus</button>
+                <a href="{% url 'pending_validations' %}" class="btn btn-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

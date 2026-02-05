@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PV en Ligne{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
+    <script src="{% static 'core/js/mention-autocomplete.js' %}" defer></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>PV</h1>
+            </div>
+            <div class="nav-links">
+                {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="nav-item">🏠 Tableau de bord</a>
+                <a href="{% url 'global_actions' %}" class="nav-item">📋 Toutes les Actions</a>
+                <a href="{% url 'global_services' %}" class="nav-item">🕐 Services</a>
+
+                {% if user.role == 'admin' or user.role == 'validator' %}
+                <a href="{% url 'pending_validations' %}" class="nav-item">⏳ En attente</a>
+                <a href="{% url 'global_validations' %}" class="nav-item">Validations</a>
+                {% endif %}
+
+                <a href="{% url 'notifications_list' %}" class="nav-item notification-link">
+                    🔔
+                    {% if user.notifications.filter %}
+                    <span class="notification-badge" id="notif-badge"></span>
+                    {% endif %}
+                </a>
+
+                <span class="user-info">
+                    <span class="badge badge-{{ user.role }}">{{ user.get_role_display }}</span>
+                </span>
+
+                <!-- Theme Toggle -->
+                <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+
+                <!-- Dropdown Compte -->
+                <div class="dropdown">
+                    <button class="dropdown-toggle">
+                        👤 Compte
+                    </button>
+                    <div class="dropdown-menu">
+                        <a href="{% url 'user_profile_self' %}" class="dropdown-item">👤 Mon Profil</a>
+                        <a href="{% url 'action_list' %}" class="dropdown-item">📝 Mes Actions</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="{% url 'logout' %}" class="dropdown-item">🚪 Déconnexion</a>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Theme Toggle -->
+                <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+
+                <!-- Dropdown Compte (non connecté) -->
+                <div class="dropdown">
+                    <button class="dropdown-toggle">
+                        👤 Compte
+                    </button>
+                    <div class="dropdown-menu">
+                        <a href="{% url 'login' %}" class="dropdown-item">🔑 Se connecter</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="{% url 'register' %}" class="dropdown-item dropdown-item-primary">📝 Créer un
+                            compte</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        {% if messages %}
+        <div class="container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 PV en Ligne. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <style>
+        .notification-link {
+            position: relative;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background: #ef4444;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .notification-badge.has-notifications {
+            display: inline-block;
+        }
+
+
+        /* Theme Toggle Button */
+        .theme-toggle {
+            background: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-size: 1.25rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            height: 44px;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(0, 112, 186, 0.03);
+            transform: scale(1.05);
+        }
+
+        .theme-icon {
+            display: inline-block;
+            transition: transform 300ms ease;
+        }
+
+        .theme-toggle:active .theme-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Dropdown Styles - PayPal Style */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-toggle {
+            background: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-weight: 600;
+            font-size: 0.9375rem;
+            padding: 0.625rem 1rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .dropdown-toggle:hover,
+        .dropdown.show .dropdown-toggle {
+            border-color: var(--primary-color);
+            background-color: rgba(0, 112, 186, 0.03);
+        }
+
+        .dropdown-toggle::after {
+            content: '▼';
+            font-size: 0.7rem;
+            transition: transform var(--transition);
+        }
+
+        .dropdown.show .dropdown-toggle::after {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 0.5rem);
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            min-width: 200px;
+            z-index: 1000;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .dropdown.show .dropdown-menu {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: background-color var(--transition);
+            font-size: 0.9375rem;
+            font-weight: 500;
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(0, 112, 186, 0.05);
+            color: var(--primary-color);
+        }
+
+        .dropdown-item-primary {
+            background: var(--primary-color);
+            color: white !important;
+            font-weight: 600;
+            margin: 0.5rem;
+            border-radius: var(--radius);
+            padding: 0.75rem 1rem;
+        }
+
+        .dropdown-item-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: var(--border-light);
+            margin: 0.5rem 0;
+        }
+    </style>
+
+    <script>
+        // Dropdown toggle functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            const dropdowns = document.querySelectorAll('.dropdown');
+
+            dropdowns.forEach(dropdown => {
+                const toggle = dropdown.querySelector('.dropdown-toggle');
+
+                toggle.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Close all other dropdowns
+                    dropdowns.forEach(otherDropdown => {
+                        if (otherDropdown !== dropdown) {
+                            otherDropdown.classList.remove('show');
+                        }
+                    });
+
+                    // Toggle current dropdown
+                    dropdown.classList.toggle('show');
+                });
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('.dropdown')) {
+                    dropdowns.forEach(dropdown => {
+                        dropdown.classList.remove('show');
+                    });
+                }
+            });
+
+            // Theme Toggle Functionality
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = document.querySelector('.theme-icon');
+            const html = document.documentElement;
+
+            // Load saved theme from localStorage
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            html.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+
+            // Toggle theme on button click
+            themeToggle.addEventListener('click', function () {
+                const currentTheme = html.getAttribute('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateThemeIcon(newTheme);
+            });
+
+            // Update icon based on theme
+            function updateThemeIcon(theme) {
+                if (theme === 'dark') {
+                    themeIcon.textContent = '☀️';
+                } else {
+                    themeIcon.textContent = '🌙';
+                }
+            }
+
+            // Prevent dropdown from closing when clicking inside
+            dropdowns.forEach(dropdown => {
+                const menu = dropdown.querySelector('.dropdown-menu');
+                if (menu) {
+                    menu.addEventListener('click', function (e) {
+                        // Allow links to work normally
+                        if (e.target.tagName === 'A') {
+                            return;
+                        }
+                        e.stopPropagation();
+                    });
+                }
+            });
+        });
+    </script>
+
+    {% if user.is_authenticated %}
+    <script>
+        // WebSocket connection for real-time notifications
+        let notificationSocket = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        const reconnectDelay = 3000; // 3 seconds
+
+        function connectWebSocket() {
+            // Determine WebSocket protocol (ws or wss)
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/notifications/`;
+
+            notificationSocket = new WebSocket(wsUrl);
+
+            notificationSocket.onopen = function (e) {
+                console.log(' WebSocket connected');
+                reconnectAttempts = 0;
+            };
+
+            notificationSocket.onmessage = function (e) {
+                const data = JSON.parse(e.data);
+
+                if (data.type === 'unread_count' || data.type === 'new_notification') {
+                    updateNotificationBadge(data.count);
+
+                    // Show toast notification for new notifications
+                    if (data.type === 'new_notification' && data.notification) {
+                        showToastNotification(data.notification);
+                    }
+                }
+            };
+
+            notificationSocket.onclose = function (e) {
+                console.log(' WebSocket disconnected');
+
+                // Attempt to reconnect
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    console.log(`🔄 Reconnecting... (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
+                    setTimeout(connectWebSocket, reconnectDelay);
+                } else {
+                    console.error(' Max reconnection attempts reached. Please refresh the page.');
+                }
+            };
+
+            notificationSocket.onerror = function (error) {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notif-badge');
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.classList.add('has-notifications');
+                } else {
+                    badge.classList.remove('has-notifications');
+                }
+            }
+        }
+
+        function showToastNotification(notification) {
+            // Create toast notification element
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.innerHTML = `
+                <div class="toast-icon">${notification.icon}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${getNotificationTitle(notification.type)}</div>
+                    <div class="toast-message">${notification.message.substring(0, 100)}${notification.message.length > 100 ? '...' : ''}</div>
+                </div>
+            `;
+
+            document.body.appendChild(toast);
+
+            // Show toast with animation
+            setTimeout(() => toast.classList.add('show'), 100);
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+
+            // Click to dismiss
+            toast.addEventListener('click', () => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            });
+        }
+
+        function getNotificationTitle(type) {
+            const titles = {
+                'validation': ' Action validée',
+                'refus': ' Action refusée',
+                'commentaire': '💬 Nouveau commentaire',
+                'nouvelle_action': '📝 Nouvelle action'
+            };
+            return titles[type] || '🔔 Notification';
+        }
+
+        // Connect WebSocket on page load
+        connectWebSocket();
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function () {
+            if (notificationSocket) {
+                notificationSocket.close();
+            }
+        });
+    </script>
+
+    <style>
+        .toast-notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 1rem;
+            display: flex;
+            gap: 1rem;
+            max-width: 400px;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.3s ease;
+            z-index: 10000;
+            cursor: pointer;
+        }
+
+        .toast-notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: #1e293b;
+        }
+
+        .toast-message {
+            font-size: 0.875rem;
+            color: #64748b;
+            line-height: 1.4;
+        }
+    </style>
+    {% endif %}
+</body>
+
+</html>

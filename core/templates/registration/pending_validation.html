@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}En attente de validation - PV en Ligne{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="pending-card">
+        <div class="pending-icon">⏳</div>
+        <h2>Compte en attente de validation</h2>
+        <p class="pending-message">
+            Votre compte a été créé avec succès, mais il doit être validé par un administrateur
+            avant que vous puissiez accéder au système.
+        </p>
+        <div class="pending-info">
+            <h3>Que faire maintenant ?</h3>
+            <ul>
+                <li>Un administrateur examinera votre demande prochainement</li>
+                <li>Vous recevrez un email une fois votre compte validé</li>
+                <li>Vous pourrez alors vous connecter normalement</li>
+            </ul>
+        </div>
+        <div class="pending-actions">
+            <a href="{% url 'login' %}" class="btn btn-secondary">Retour à la connexion</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

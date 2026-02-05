@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Historique de Validation - PV en Ligne{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <h2>📜 Historique de Validation</h2>
+        <p class="user-role">Action #{{ action.id }}</p>
+    </div>
+
+    <div class="action-details-card">
+        <h3>Détails de l'Action</h3>
+        <p><strong>Auteur :</strong> {{ action.auteur.username }}</p>
+        <p><strong>Service :</strong> {{ action.service }}</p>
+        <p><strong>Statut actuel :</strong>
+            {% if action.validation_status == 'en_attente' %}
+            <span class="badge badge-warning">En attente</span>
+            {% elif action.validation_status == 'validé' %}
+            <span class="badge badge-success">Validé</span>
+            {% elif action.validation_status == 'refusé' %}
+            <span class="badge badge-danger">Refusé</span>
+            {% endif %}
+        </p>
+        <p><strong>Date de création :</strong> {{ action.date_creation|date:"d/m/Y à H:i" }}</p>
+        <p><strong>Description :</strong></p>
+        <p class="action-description">{{ action.description }}</p>
+    </div>
+
+    <div class="validation-timeline">
+        <h3>Historique des Validations</h3>
+
+        {% if validations %}
+        <div class="timeline">
+            {% for validation in validations %}
+            <div class="timeline-item">
+                <div class="timeline-marker 
+                    {% if validation.statut == 'validé' %}marker-success{% endif %}
+                    {% if validation.statut == 'refusé' %}marker-danger{% endif %}
+                    {% if validation.statut == 'en_attente' %}marker-warning{% endif %}
+                "></div>
+
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <strong>
+                            {% if validation.statut == 'validé' %}✓ Validé{% endif %}
+                            {% if validation.statut == 'refusé' %}✗ Refusé{% endif %}
+                            {% if validation.statut == 'en_attente' %}💬 Commentaire{% endif %}
+                        </strong>
+                        <span class="text-muted">{{ validation.date_validation|date:"d/m/Y à H:i" }}</span>
+                    </div>
+
+                    <p><strong>Par :</strong> {{ validation.validateur.username }}
+                        {% if validation.is_self_validation %}
+                        <span class="badge badge-warning">⚠️ Auto-validation</span>
+                        {% endif %}
+                    </p>
+
+                    {% if validation.commentaire %}
+                    <div class="validation-comment">
+                        <p><strong>Commentaire :</strong></p>
+                        <p>{{ validation.commentaire }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>Aucune validation enregistrée pour cette action.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="form-actions">
+        <a href="{% url 'pending_validations' %}" class="btn btn-secondary">← Retour aux validations</a>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Retour au tableau de bord</a>
+    </div>
+</div>
+{% endblock %}

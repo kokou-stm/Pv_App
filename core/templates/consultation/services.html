@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}Consultation Services - PV en Ligne{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <h2>🕐 Consultation Globale des Services</h2>
+        <p class="user-role">Tous les services du système</p>
+    </div>
+
+    <!-- Statistics Dashboard -->
+    <div class="stats-dashboard">
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <h3>{{ stats.total }}</h3>
+                <p>Total Services</p>
+            </div>
+        </div>
+        <div class="stat-card stat-success">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+                <h3>{{ stats.open }}</h3>
+                <p>Services Ouverts</p>
+            </div>
+        </div>
+        <div class="stat-card stat-info">
+            <div class="stat-icon">🔒</div>
+            <div class="stat-content">
+                <h3>{{ stats.closed }}</h3>
+                <p>Services Fermés</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="filter-card">
+        <h3>🔍 Filtres</h3>
+        <form method="get" class="filter-form">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="date_from">Date début</label>
+                    <input type="date" name="date_from" id="date_from" value="{{ filters.date_from }}">
+                </div>
+
+                <div class="filter-group">
+                    <label for="date_to">Date fin</label>
+                    <input type="date" name="date_to" id="date_to" value="{{ filters.date_to }}">
+                </div>
+
+                <div class="filter-group">
+                    <label for="user">Utilisateur</label>
+                    <select name="user" id="user">
+                        <option value="">Tous</option>
+                        {% for u in users %}
+                        <option value="{{ u.id }}" {% if filters.user == u.id|stringformat:"s" %}selected{% endif %}>
+                            {{ u.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="status">Statut</label>
+                    <select name="status" id="status">
+                        <option value="">Tous</option>
+                        <option value="ouvert" {% if filters.status == "ouvert" %}selected{% endif %}>Ouvert</option>
+                        <option value="fermé" {% if filters.status == "fermé" %}selected{% endif %}>Fermé</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary">Appliquer les filtres</button>
+                <a href="{% url 'global_services' %}" class="btn btn-secondary">Réinitialiser</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results -->
+    {% if page_obj %}
+    <div class="consultation-table-container">
+        <table class="consultation-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Utilisateur</th>
+                    <th>Date Ouverture</th>
+                    <th>Date Fermeture</th>
+                    <th>Durée</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for service in page_obj %}
+                <tr>
+                    <td>#{{ service.id }}</td>
+                    <td>{{ service.user.username }}</td>
+                    <td>{{ service.date_ouverture|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if service.date_fermeture %}
+                        {{ service.date_fermeture|date:"d/m/Y H:i" }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if service.statut ==  'fermé' and service.date_fermeture %}
+                        {% with duration=service.date_fermeture|timesince:service.date_ouverture %}
+                        {{ duration }}
+                        {% endwith %}
+                        {% else %}
+                        {{ service.get_remaining_time_display }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if service.statut ==  'ouvert' %}
+                        <span class="badge badge-success">Ouvert</span>
+                        {% else %}
+                        <span class="badge badge-secondary">Fermé</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-info">{{ service.action_count }} action(s)</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page=1{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+            class="page-link">« Première</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+            class="page-link">‹ Précédente</a>
+        {% endif %}
+
+        <span class="page-current">
+            Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+            class="page-link">Suivante ›</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+            class="page-link">Dernière »</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>Aucun service trouvé</h3>
+        <p>Aucun service ne correspond aux filtres sélectionnés.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

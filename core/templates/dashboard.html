@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Tableau de bord - PV en Ligne{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <h2> Bienvenue, {{ user.username }} !</h2>
+        <p class="user-role">Rôle : <span class="badge badge-{{ user.role }}">{{ user.get_role_display }}</span></p>
+    </div>
+
+    <!-- Service Status Card -->
+    <div class="service-status-card">
+        <h3>🕐 Mon Service</h3>
+        {% if active_service %}
+        <div class="service-active">
+            <div class="service-status-badge">
+                <span class="status-indicator status-active"></span>
+                <strong>Service Actif</strong>
+            </div>
+            <div class="service-details">
+                <p><strong>Ouvert le :</strong> {{ active_service.date_ouverture|date:"d/m/Y à H:i" }}</p>
+                <p><strong>Fermeture prévue :</strong> {{ active_service.date_fermeture|date:"d/m/Y à H:i" }}</p>
+                <p class="service-remaining">
+                    <strong>Temps restant :</strong>
+                    <span class="remaining-time">{{ active_service.get_remaining_time_display }}</span>
+                </p>
+            </div>
+            <form method="post" action="{% url 'close_service' %}" style="margin-top: 1rem;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Fermer le service</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="service-inactive">
+            <div class="service-status-badge">
+                <span class="status-indicator status-inactive"></span>
+                <strong>Aucun Service Actif</strong>
+            </div>
+            <p>Vous n'avez pas de service en cours. Cliquez ci-dessous pour prendre service.</p>
+            <form method="post" action="{% url 'open_service' %}" style="margin-top: 1rem;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">📋 Prendre Service</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <div class="card-icon">📋</div>
+            <h3>Mes PV</h3>
+            <p>Gérez vos procès-verbaux</p>
+            <p class="card-stat">0 PV</p>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-icon">✍️</div>
+            <h3>Nouveau PV</h3>
+            <p>Créer un nouveau procès-verbal</p>
+            <a href="#" class="btn btn-primary">Créer</a>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-icon">👥</div>
+            <h3>Collaborations</h3>
+            <p>PV partagés avec vous</p>
+            <p class="card-stat">0 partagé(s)</p>
+        </div>
+
+        {% if user.is_staff %}
+        <div class="dashboard-card admin-card">
+            <div class="card-icon">⚙️</div>
+            <h3>Administration</h3>
+            <p>Accéder au panneau d'administration</p>
+            <a href="/admin/" class="btn btn-secondary">Admin</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Service History -->
+    {% if service_history %}
+    <div class="service-history">
+        <h3>📜 Historique des Services</h3>
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Date d'ouverture</th>
+                    <th>Date de fermeture</th>
+                    <th>Durée</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for service in service_history %}
+                <tr>
+                    <td>{{ service.date_ouverture|date:"d/m/Y H:i" }}</td>
+                    <td>{{ service.date_fermeture|date:"d/m/Y H:i" }}</td>
+                    <td>24h</td>
+                    <td>
+                        {% if service.statut == 'ouvert' %}
+                        <span class="badge badge-success">Ouvert</span>
+                        {% else %}
+                        <span class="badge badge-secondary">Fermé</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="dashboard-info">
+        <h3>ℹ️ Informations du compte</h3>
+        <ul>
+            <li><strong>Email :</strong> {{ user.email }}</li>
+            <li><strong>Rôle :</strong> {{ user.get_role_display }}</li>
+            <li><strong>Statut :</strong>
+                {% if user.is_validated %}
+                <span class="badge badge-success">✓ Validé</span>
+                {% else %}
+                <span class="badge badge-warning">⏳ En attente</span>
+                {% endif %}
+            </li>
+            <li><strong>Membre depuis :</strong> {{ user.date_joined|date:"d/m/Y" }}</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

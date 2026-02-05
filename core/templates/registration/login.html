@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Connexion - PV en Ligne{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2>🔐 Connexion</h2>
+            <p>Connectez-vous pour accéder à votre espace</p>
+        </div>
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="username">Nom d'utilisateur</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="Nom d'utilisateur"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Mot de passe"
+                    required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Se connecter</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Vous n'avez pas de compte ? <a href="{% url 'register' %}">S'inscrire</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

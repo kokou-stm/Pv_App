@@ -20,6 +20,10 @@ RUN pip install --upgrade pip \
 
 COPY . .
 
+# Rendre le script de démarrage exécutable
+RUN chmod +x docker-entrypoint.sh
+
 EXPOSE 80
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:80"]
+# Utiliser le script d'entrée pour exécuter les migrations
+CMD ["./docker-entrypoint.sh"]
